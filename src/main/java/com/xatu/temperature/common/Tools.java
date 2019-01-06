@@ -1,31 +1,36 @@
 package com.xatu.temperature.common;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.MapHandler;
+
+import java.beans.PropertyVetoException;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.*;
 
 /**
  * Created by 3 on 2019/1/3.
  */
 public class Tools {
 
-    public static void main(String[] args) {
-        File f = new File("E:\\Idea_workspace\\temperature\\src\\main\\resources\\china_sites_20180101.csv");
+    private static QueryRunner queryRunner;
 
-        String path="C:\\Users\\pc\\Desktop\\站点_20180101-20181229\\站点_20180101-20181229";
+    public static void main(String[] args) {
+        String path = "C:\\Users\\pc\\Desktop\\站点_20180101-20181229\\站点_20180101-20181229";
         List<File> files = getAllCVSFile(path);
         for (File file : files) {
             List<String> strings = revertFile(file);
             HashMap<String, List<String>> formatData = getFormatData(strings);
-            if(insertIntoSQL(formatData)){
+            if (insertIntoSQL(formatData)) {
                 System.out.println(true);
             }
         }
 
 
-
     }
+
     //获得所有的cvs文件
     private static List<File> getAllCVSFile(String path) {
         File file = new File(path);
@@ -47,7 +52,7 @@ public class Tools {
             BufferedReader bf = new BufferedReader(new FileReader(f));
             List<String> titles = new ArrayList<>();
             String line;
-            while ((line = bf.readLine()) !=null) {
+            while ((line = bf.readLine()) != null) {
                 titles.add(line);
             }
 
@@ -58,7 +63,7 @@ public class Tools {
                     data[i1][i] = split[i1];
                 }
             }
-            List<String> a= new ArrayList<>();
+            List<String> a = new ArrayList<>();
             for (String[] datum : data) {
                 StringBuffer sb = new StringBuffer();
                 for (int i = 0; i < datum.length; i++) {
@@ -66,8 +71,7 @@ public class Tools {
 
                         sb.append(datum[i]);
                         if (i != datum.length - 1)
-                            sb
-                                    .append(",");
+                            sb.append(",");
                     }
                 }
                 if (!sb.toString().trim().isEmpty()) {
@@ -88,10 +92,48 @@ public class Tools {
 
     //入库
     private static boolean insertIntoSQL(HashMap<String, List<String>> formatData) {
-        System.out.println(formatData);
+        for (Map.Entry<String, List<String>> entry : formatData.entrySet()) {
+            String key = entry.getKey();
+            List<String> list = entry.getValue();
+            Object[] objects = new Object[17];
+            for (int i = 0; i < list.size(); i++) {
+                objects[i] = list.get(i);
+            }
+            objects[16] = key.split("-")[0];
+            String time = key.split("-")[1];
+            objects[16] = new Timestamp(Integer.parseInt(time.substring(0,4))-1900,Integer.parseInt(time.substring(4,6))-1,
+                    Integer.parseInt(time.substring(6,8)),Integer.parseInt(key.split("-")[2]),0,0,0);
+            try {
+                getQueryRunner();
+                String sql = "INSERT INTO `hjjkdb`.`environment_glob_info_history` ( `AQI`, `PM2_5`, `PM2_5_24H`, `PM10`, `PM10_24H`, `SO2`, `S02_24H`, `NO2`, `NO2_24H`, `O3`, `O3_24H`,`O3_8H`, `O3_8H_24H`, `CO`, `CO_24H`,`type`, `datetime`)" +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+                MapHandler rsh = new MapHandler();
+                Map<String, Object> insert = queryRunner.insert(sql, rsh, objects);
+                System.out.println(key+"-----"+insert);
+                return true;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
         return false;
     }
 
+    private static void getException(){
+//        C3P0 和 JDBCUtil
+//        com.mysql.jdbc.PreparedStatement.setTimestamp(int, java.sql.Timestamp)下的
+//        this.parameterMetaData.metadata   报空指针异常；
+        try {
+            MapHandler rsh = new MapHandler();
+            Object[] objects = new Object[17];
+            objects[16] = new Timestamp(2018-1900,1-1,5,0,0,0,0);
+
+            String sql = "INSERT INTO `hjjkdb`.`environment_glob_info_history` ( `AQI`, `PM2_5`, `PM2_5_24H`, `PM10`, `PM10_24H`, `SO2`, `S02_24H`, `NO2`, `NO2_24H`, `O3`, `O3_24H`,`O3_8H`, `O3_8H_24H`, `CO`, `CO_24H`,`type`, `datetime`)" +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+            Map<String, Object> insert = queryRunner.insert(sql, rsh, objects);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
     //输入文本，获得格式化数据
     private static HashMap<String, List<String>> getFormatData(List<String> f) {
         File b = new File("E:\\Idea_workspace\\temperature\\src\\main\\resources\\站点列表-2018.11.08起.csv");
@@ -163,5 +205,24 @@ public class Tools {
         }
         return null;
     }
-
+    private static void getQueryRunner() {
+        if (queryRunner == null) {
+            try {
+                //第一步：创建连接池核心工具类
+                ComboPooledDataSource dataSource = new ComboPooledDataSource();
+                //第二步：连接池，url，驱动，账号，密码，初始连接数，最大连接数
+                dataSource.setJdbcUrl("jdbc:mysql://140.143.98.65:3306/hjjkdb");//设置url
+                dataSource.setDriverClass("com.mysql.jdbc.Driver");//设置驱动
+                dataSource.setUser("mysql");//mysql的账号
+                dataSource.setPassword("913043599");//mysql的密码
+                dataSource.setInitialPoolSize(6);//初始连接数，即初始化6个连接
+                dataSource.setMaxPoolSize(50);//最大连接数，即最大的连接数是50
+                dataSource.setMaxIdleTime(60);//最大空闲时间
+                //第三步：从连接池对象中获取数据库连接
+                queryRunner = new QueryRunner(dataSource);
+            } catch (PropertyVetoException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
