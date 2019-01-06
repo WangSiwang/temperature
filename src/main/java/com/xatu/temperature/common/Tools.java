@@ -23,8 +23,8 @@ public class Tools {
         for (File file : files) {
             List<String> strings = revertFile(file);
             HashMap<String, List<String>> formatData = getFormatData(strings);
-            if (insertIntoSQL(formatData)) {
-                System.out.println(true);
+            if (!insertIntoSQL(formatData)) {
+                System.out.println(file.getName());
             }
         }
 
@@ -42,7 +42,6 @@ public class Tools {
                 }
             }
         }
-        System.out.println();
         return files;
     }
 
@@ -92,27 +91,28 @@ public class Tools {
 
     //入库
     private static boolean insertIntoSQL(HashMap<String, List<String>> formatData) {
-        for (Map.Entry<String, List<String>> entry : formatData.entrySet()) {
-            String key = entry.getKey();
-            List<String> list = entry.getValue();
-            Object[] objects = new Object[17];
-            for (int i = 0; i < list.size(); i++) {
-                objects[i] = list.get(i);
-            }
-            objects[15] = key.split("-")[0];
-            String time = key.split("-")[1];
-            objects[16] = new Timestamp(Integer.parseInt(time.substring(0,4))-1900,Integer.parseInt(time.substring(4,6))-1,
-                    Integer.parseInt(time.substring(6,8)),Integer.parseInt(key.split("-")[2]),0,0,0);
-            try {
-                getQueryRunner();
-                String sql = "INSERT INTO `hjjkdb`.`environment_glob_info_history` ( `AQI`, `PM2_5`, `PM2_5_24H`, `PM10`, `PM10_24H`, `SO2`, `S02_24H`, `NO2`, `NO2_24H`, `O3`, `O3_24H`,`O3_8H`, `O3_8H_24H`, `CO`, `CO_24H`,`type`, `datetime`)" +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
-                MapHandler rsh = new MapHandler();
-                Map<String, Object> insert = queryRunner.insert(sql, rsh, objects);
-                System.out.println(key+"-----"+insert);
-                return true;
-            } catch (SQLException e) {
-                e.printStackTrace();
+        if (formatData != null) {
+            for (Map.Entry<String, List<String>> entry : formatData.entrySet()) {
+                String key = entry.getKey();
+                List<String> list = entry.getValue();
+                Object[] objects = new Object[17];
+                for (int i = 0; i < list.size(); i++) {
+                    objects[i] = list.get(i).isEmpty() ? "-1" : list.get(i);
+                }
+                objects[15] = key.split("-")[0];
+                String time = key.split("-")[1];
+                objects[16] = time + "-" + key.split("-")[2];
+                try {
+                    getQueryRunner();
+                    String sql = "INSERT INTO `hjjkdb`.`environment_glob_info_history` ( `AQI`, `PM2_5`, `PM2_5_24H`, `PM10`, `PM10_24H`, `SO2`, `S02_24H`, `NO2`, `NO2_24H`, `O3`, `O3_24H`,`O3_8H`, `O3_8H_24H`, `CO`, `CO_24H`,`type`, `datetime`)" +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+                    MapHandler rsh = new MapHandler();
+                    Map<String, Object> insert = queryRunner.insert(sql, rsh, objects);
+                    System.out.println(key + "-----" + insert);
+                    return true;
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return false;
@@ -153,11 +153,9 @@ public class Tools {
                 for (int i = 0; i < f.size(); i++) {
                     line = f.get(i);
                     if (i==1){
-                        System.out.println(f);
                         hours = line;
                     }
                     if (i==0){
-                        System.out.println(line);
                         dates=line;
                     }
                     for (String title : titles) {
@@ -167,35 +165,39 @@ public class Tools {
                         }
                     }
                 }
-                String[] dateSplite = dates.split(",");
-                String[] hourSplite = hours.split(",");
+                if (hours==null){
+                    System.out.println();
+                }
+                if (dates != null && hours!=null) {
+                    String[] dateSplite = dates.split(",");
+                    String[] hourSplite = hours.split(",");
 
-                HashMap<String,List<String>> result= new HashMap<>();
+                    HashMap<String, List<String>> result = new HashMap<>();
 
-                for (int i = 0; i < datas.size(); i++) {
-                    String[] lineData = datas.get(i).split(",");
-                    String type = null;
-                    for (int i1 = 0; i1 < lineData.length; i1++) {
-                        if (i1 == 0) {
-                            type = lineData[i1];
-                            continue;
-                        }
-                        String date = dateSplite[i1];
-                        String hour = hourSplite[i1];
-                        String data = lineData[i1];
-                        String key = type+"-"+date+"-"+ hour;
-                        if (result.containsKey(key)) {
-                            List<String> strings = result.get(key);
-                            strings.add(data);
-                        }else {
-                            ArrayList<String> strings = new ArrayList<>();
-                            strings.add(data);
-                            result.put(key,strings);
+                    for (int i = 0; i < datas.size(); i++) {
+                        String[] lineData = datas.get(i).split(",");
+                        String type = null;
+                        for (int i1 = 0; i1 < lineData.length; i1++) {
+                            if (i1 == 0) {
+                                type = lineData[i1];
+                                continue;
+                            }
+                            String date = dateSplite[i1];
+                            String hour = hourSplite[i1];
+                            String data = lineData[i1];
+                            String key = type + "-" + date + "-" + hour;
+                            if (result.containsKey(key)) {
+                                List<String> strings = result.get(key);
+                                strings.add(data);
+                            } else {
+                                ArrayList<String> strings = new ArrayList<>();
+                                strings.add(data);
+                                result.put(key, strings);
+                            }
                         }
                     }
+                    return result;
                 }
-                System.out.println();
-                return result;
             }
 
         } catch (FileNotFoundException e) {
