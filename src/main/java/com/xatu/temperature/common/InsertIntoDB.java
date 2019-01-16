@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Created by 3 on 2019/1/3.
  */
-public class Tools {
+public class InsertIntoDB {
 
     public static void main(String[] args) {
         File f = new File("F:\\项目\\温度检测项目\\temperature\\src\\main\\resources\\china_sites_20180101.csv");
