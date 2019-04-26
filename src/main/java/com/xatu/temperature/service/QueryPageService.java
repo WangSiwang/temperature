@@ -13,10 +13,8 @@ import com.xatu.temperature.entity.EnvironmentInfoHistory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.util.*;
 
 /**
  * Created by 3 on 2018/9/29.
@@ -82,12 +80,13 @@ public class QueryPageService {
 
 
     public String getTimeType() {
-        List<String> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
+        List<Timestamp> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
         return JSONArray.toJSONString(allTimes);
     }
 
 
     public String getTimeTypeForPM2_5(String time) {
+        time = execTimeIsError(time);
         List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository.getAllByTime(Long.parseLong(time)/1000,Long.parseLong(time)/1000);
         List<Map> list = new ArrayList();
         for (EnvironmentInfoCurrHistoryEntity allTime : allTimes) {
@@ -96,12 +95,14 @@ public class QueryPageService {
             map.put("deviceId",allTime.getDeviceId());
             map.put("deviceName",allTime.getDeviceName());
             map.put("deviceLocation",allTime.getDeviceLocation());
+            map.put("time",allTime.getTime());
             list.add(map);
         }
         return JSONArray.toJSONString(list);
     }
 
     public String getTimeTypeForPM10(String time) {
+        time = execTimeIsError(time);
         List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository.getAllByTime(Long.parseLong(time)/1000,Long.parseLong(time)/1000);
         List<Map> list = new ArrayList();
         for (EnvironmentInfoCurrHistoryEntity allTime : allTimes) {
@@ -110,8 +111,23 @@ public class QueryPageService {
             map.put("deviceId",allTime.getDeviceId());
             map.put("deviceName",allTime.getDeviceName());
             map.put("deviceLocation",allTime.getDeviceLocation());
+            map.put("time",allTime.getTime());
             list.add(map);
         }
         return JSONArray.toJSONString(list);
+    }
+
+    private String execTimeIsError(String time) {
+        List<Timestamp> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
+
+
+        List<Long> allTimes1 = new ArrayList<>();
+        for (Timestamp allTime : allTimes) {
+            if (String.valueOf(allTime.getTime()).equals(time)) return time;
+            allTimes1.add(Long.parseLong(String.valueOf(allTime.getTime())));
+        }
+
+        Collections.sort(allTimes1);
+        return allTimes1.get(0).toString();
     }
 }
