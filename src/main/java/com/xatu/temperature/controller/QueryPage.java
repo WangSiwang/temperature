@@ -6,6 +6,7 @@ import com.xatu.temperature.service.QueryPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
@@ -70,5 +71,26 @@ public class QueryPage {
         return queryPageService.getDistrict_24IAQI();
     }
 
+
+    @GetMapping("/getTimeType")
+    @ResponseBody
+    public  String getTimeType(){
+        String time = queryPageService.getTimeType();
+        return time;
+    }
+
+    @GetMapping("/getTimeTypeForPM2_5")
+    @ResponseBody
+    public  String getTimeTypeForPM2_5(@RequestParam String time){
+        String data = queryPageService.getTimeTypeForPM2_5(time);
+        return data;
+    }
+
+    @GetMapping("/getTimeTypeForPM10")
+    @ResponseBody
+    public  String getTimeTypeForPM10(@RequestParam  String time){
+        String data = queryPageService.getTimeTypeForPM10(time);
+        return data;
+    }
 
 }
