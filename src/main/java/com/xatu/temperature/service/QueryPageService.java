@@ -106,7 +106,7 @@ public class QueryPageService {
         List<Map> list = new ArrayList();
         for (EnvironmentInfoCurrHistoryEntity allTime : allTimes) {
             Map map = new HashMap();
-            map.put("pm10",allTime.getPm25());
+            map.put("pm10",allTime.getPm10());
             map.put("deviceId",allTime.getDeviceId());
             map.put("deviceName",allTime.getDeviceName());
             map.put("deviceLocation",allTime.getDeviceLocation());
