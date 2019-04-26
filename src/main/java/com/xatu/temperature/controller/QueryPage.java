@@ -45,4 +45,30 @@ public class QueryPage {
         return parse.toJSONString();
     }
 
+
+    @GetMapping("/getCity_24AQI")
+    @ResponseBody
+    public  String getCity_24AQI(){
+        return queryPageService.getCity_24AQI();
+    }
+
+    @GetMapping("/getCity_7DayAQI")
+    @ResponseBody
+    public  String getCity_7DayAQI(){
+        return queryPageService.getCity_7DayAQI();
+    }
+
+    @GetMapping("/getDistrict_24Nd")
+    @ResponseBody
+    public  String getDistrict_24Nd(){
+        return queryPageService.getDistrict_24Nd();
+    }
+
+    @GetMapping("/getDistrict_24IAQI")
+    @ResponseBody
+    public  String getDistrict_24IAQI(){
+        return queryPageService.getDistrict_24IAQI();
+    }
+
+
 }
