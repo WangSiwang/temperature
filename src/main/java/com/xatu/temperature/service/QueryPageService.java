@@ -13,8 +13,10 @@ import com.xatu.temperature.entity.EnvironmentInfoHistory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by 3 on 2018/9/29.
@@ -79,23 +81,23 @@ public class QueryPageService {
 
 
 
-    public String getTimeType() {
-        List<Timestamp> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
+    public String getNumberType() {
+        List<Integer> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
         return JSONArray.toJSONString(allTimes);
     }
 
 
     public String getTimeTypeForPM2_5(String time) {
         time = execTimeIsError(time);
-        List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository.getAllByTime(Long.parseLong(time)/1000,Long.parseLong(time)/1000);
+        List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository
+                .getAllByTime(Integer.parseInt(time));
         List<Map> list = new ArrayList();
         for (EnvironmentInfoCurrHistoryEntity allTime : allTimes) {
             Map map = new HashMap();
             map.put("pm25",allTime.getPm25());
             map.put("deviceId",allTime.getDeviceId());
-            map.put("deviceName",allTime.getDeviceName());
             map.put("deviceLocation",allTime.getDeviceLocation());
-            map.put("time",allTime.getTime());
+            map.put("number",allTime.getNumber());
             list.add(map);
         }
         return JSONArray.toJSONString(list);
@@ -103,31 +105,34 @@ public class QueryPageService {
 
     public String getTimeTypeForPM10(String time) {
         time = execTimeIsError(time);
-        List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository.getAllByTime(Long.parseLong(time)/1000,Long.parseLong(time)/1000);
+        List<EnvironmentInfoCurrHistoryEntity> allTimes = environmentInfoCurrHistoryRepository
+                .getAllByTime(Integer.parseInt(time));
         List<Map> list = new ArrayList();
         for (EnvironmentInfoCurrHistoryEntity allTime : allTimes) {
             Map map = new HashMap();
             map.put("pm10",allTime.getPm10());
             map.put("deviceId",allTime.getDeviceId());
-            map.put("deviceName",allTime.getDeviceName());
             map.put("deviceLocation",allTime.getDeviceLocation());
-            map.put("time",allTime.getTime());
+            map.put("number",allTime.getNumber());
             list.add(map);
         }
         return JSONArray.toJSONString(list);
     }
 
-    private String execTimeIsError(String time) {
-        List<Timestamp> allTimes = environmentInfoCurrHistoryRepository.getAllTimes();
+    private String execTimeIsError(String number) {
+        List<Integer> allNumbers = environmentInfoCurrHistoryRepository.getAllTimes();
 
-
-        List<Long> allTimes1 = new ArrayList<>();
-        for (Timestamp allTime : allTimes) {
-            if (String.valueOf(allTime.getTime()).equals(time)) return time;
-            allTimes1.add(Long.parseLong(String.valueOf(allTime.getTime())));
+        try {
+            Integer.parseInt(number);
+        } catch (NumberFormatException e) {
+            return allNumbers.get(0).toString();
+        }
+        for (Integer num : allNumbers) {
+            if (number!=null && Integer.parseInt(number) == num ) {
+                return number;
+            }
         }
 
-        Collections.sort(allTimes1);
-        return allTimes1.get(0).toString();
+        return allNumbers.get(0).toString();
     }
 }

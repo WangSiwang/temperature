@@ -72,24 +72,24 @@ public class QueryPage {
     }
 
 
-    @GetMapping("/getTimeType")
+    @GetMapping("/getNumberType")
     @ResponseBody
-    public  String getTimeType(){
-        String time = queryPageService.getTimeType();
+    public  String getNumberType(){
+        String time = queryPageService.getNumberType();
         return time;
     }
 
     @GetMapping("/getTimeTypeForPM2_5")
     @ResponseBody
-    public  String getTimeTypeForPM2_5(@RequestParam String time){
-        String data = queryPageService.getTimeTypeForPM2_5(time);
+    public  String getTimeTypeForPM2_5(@RequestParam String number){
+        String data = queryPageService.getTimeTypeForPM2_5(number);
         return data;
     }
 
     @GetMapping("/getTimeTypeForPM10")
     @ResponseBody
-    public  String getTimeTypeForPM10(@RequestParam  String time){
-        String data = queryPageService.getTimeTypeForPM10(time);
+    public  String getTimeTypeForPM10(@RequestParam  String number){
+        String data = queryPageService.getTimeTypeForPM10(number);
         return data;
     }
 
